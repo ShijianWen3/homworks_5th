@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度相机技术原理详解</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .section {
+            background: white;
+            margin: 25px 0;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .diagram-container {
+            background: #f8f9ff;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px solid #e1e8ff;
+        }
+        
+        .circuit-diagram {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .principle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .principle-item {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+        
+        .tech-comparison {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+        
+        .tech-comparison th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        
+        .tech-comparison td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tech-comparison tr:nth-child(even) {
+            background: #f8f9ff;
+        }
+        
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .performance-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .performance-card h4 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .performance-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .app-card {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e1e8ff;
+            transition: transform 0.3s ease;
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .trend-timeline {
+            margin: 30px 0;
+        }
+        
+        .timeline-item {
+            background: #fff;
+            margin: 20px 0;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+        
+        .timeline-year {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .principle-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>深度相机技术原理详解</h1>
+            <p>包含电路图、光路图和原理示意图的专业技术文档</p>
+        </div>
+
+        <div class="section">
+            <h2>📖 深度相机概述</h2>
+            <p><strong>深度相机（Depth Camera）</strong>是一种能够同时获取场景RGB图像和深度信息的三维视觉传感器。它通过主动或被动的方式测量场景中每个像素点到相机的距离，生成深度图（Depth Map），为计算机视觉、机器人导航、三维重建等应用提供关键的空间信息。</p>
+            
+            <div class="diagram-container">
+                <h4>深度相机系统架构图</h4>
+                <svg class="circuit-diagram" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 背景 -->
+                    <rect width="800" height="400" fill="#f8f9ff"/>
+                    
+                    <!-- 光源模块 -->
+                    <rect x="50" y="100" width="120" height="80" fill="#ffeb3b" stroke="#f57f17" stroke-width="2" rx="10"/>
+                    <text x="110" y="130" text-anchor="middle" font-size="12" font-weight="bold">红外光源</text>
+                    <text x="110" y="145" text-anchor="middle" font-size="10">LED/Laser</text>
+                    <text x="110" y="160" font-size="10" text-anchor="middle">850nm/940nm</text>
+                    
+                    <!-- 投射透镜 -->
+                    <ellipse cx="220" cy="140" rx="15" ry="25" fill="#4caf50" stroke="#2e7d32" stroke-width="2"/>
+                    <text x="220" y="200" text-anchor="middle" font-size="10">投射透镜</text>
+                    
+                    <!-- 目标物体 -->
+                    <rect x="350" y="80" width="100" height="120" fill="#9e9e9e" stroke="#424242" stroke-width="2" rx="5"/>
+                    <text x="400" y="145" text-anchor="middle" font-size="12" font-weight="bold">目标物体</text>
+                    
+                    <!-- 接收透镜 -->
+                    <ellipse cx="550" cy="140" rx="15" ry="25" fill="#4caf50" stroke="#2e7d32" stroke-width="2"/>
+                    <text x="550" y="200" text-anchor="middle" font-size="10">接收透镜</text>
+                    
+                    <!-- 传感器 -->
+                    <rect x="620" y="110" width="100" height="60" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="5"/>
+                    <text x="670" y="135" text-anchor="middle" font-size="12" font-weight="bold">CMOS传感器</text>
+                    <text x="670" y="150" text-anchor="middle" font-size="10">红外敏感</text>
+                    
+                    <!-- 处理单元 -->
+                    <rect x="620" y="220" width="100" height="60" fill="#ff5722" stroke="#d84315" stroke-width="2" rx="5"/>
+                    <text x="670" y="245" text-anchor="middle" font-size="12" font-weight="bold">处理单元</text>
+                    <text x="670" y="260" text-anchor="middle" font-size="10">DSP/FPGA</text>
+                    
+                    <!-- 光路 -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+                         refX="10" refY="3.5" orient="auto">
+                          <polygon points="0 0, 10 3.5, 0 7" fill="#ff5722" />
+                        </marker>
+                    </defs>
+                    
+                    <!-- 发射光路 -->
+                    <line x1="170" y1="120" x2="200" y2="125" stroke="#ff5722" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <line x1="170" y1="140" x2="200" y2="140" stroke="#ff5722" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <line x1="170" y1="160" x2="200" y2="155" stroke="#ff5722" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    
+                    <line x1="235" y1="125" x2="350" y2="120" stroke="#ff5722" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <line x1="235" y1="140" x2="350" y2="140" stroke="#ff5722" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <line x1="235" y1="155" x2="350" y2="160" stroke="#ff5722" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- 反射光路 -->
+                    <line x1="450" y1="120" x2="535" y2="125" stroke="#4caf50" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <line x1="450" y1="140" x2="535" y2="140" stroke="#4caf50" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <line x1="450" y1="160" x2="535" y2="155" stroke="#4caf50" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    
+                    <line x1="565" y1="125" x2="620" y2="125" stroke="#4caf50" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <line x1="565" y1="140" x2="620" y2="140" stroke="#4caf50" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    <line x1="565" y1="155" x2="620" y2="155" stroke="#4caf50" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- 数据流 -->
+                    <line x1="670" y1="170" x2="670" y2="220" stroke="#2196f3" stroke-width="3" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- 标注 -->
+                    <text x="280" y="100" text-anchor="middle" font-size="10" fill="#ff5722">发射光束</text>
+                    <text x="500" y="100" text-anchor="middle" font-size="10" fill="#4caf50">反射光束</text>
+                    <text x="740" y="195" text-anchor="middle" font-size="10" fill="#2196f3">深度数据</text>
+                    
+                    <!-- 距离标注 -->
+                    <line x1="400" y1="250" x2="400" y2="270" stroke="#333" stroke-width="1"/>
+                    <line x1="110" y1="250" x2="110" y2="270" stroke="#333" stroke-width="1"/>
+                    <line x1="110" y1="260" x2="400" y2="260" stroke="#333" stroke-width="2"/>
+                    <text x="255" y="275" text-anchor="middle" font-size="12" font-weight="bold">基线距离 (Baseline)</text>
+                    
+                    <!-- 标题 -->
+                    <text x="400" y="30" text-anchor="middle" font-size="16" font-weight="bold">深度相机测量原理示意图</text>
+                </svg>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>⚙️ 核心工作原理</h2>
+            
+            <div class="principle-grid">
+                <div class="principle-item">
+                    <h3>🌟 结构光技术 (Structured Light)</h3>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="400" height="300" fill="#f0f4ff"/>
+                            
+                            <!-- 投射器 -->
+                            <rect x="20" y="100" width="60" height="40" fill="#ffeb3b" stroke="#f57f17" stroke-width="2" rx="5"/>
+                            <text x="50" y="125" text-anchor="middle" font-size="10" font-weight="bold">激光投射器</text>
+                            
+                            <!-- 结构光图案 -->
+                            <g stroke="#ff5722" stroke-width="1" fill="none">
+                                <line x1="90" y1="110" x2="150" y2="110"/>
+                                <line x1="90" y1="120" x2="150" y2="115"/>
+                                <line x1="90" y1="130" x2="150" y2="125"/>
+                            </g>
+                            <text x="120" y="100" text-anchor="middle" font-size="8">结构光图案</text>
+                            
+                            <!-- 物体 -->
+                            <rect x="180" y="80" width="80" height="80" fill="#9e9e9e" stroke="#424242" stroke-width="2" rx="5"/>
+                            <text x="220" y="125" text-anchor="middle" font-size="10">物体表面</text>
+                            
+                            <!-- 变形图案 -->
+                            <g stroke="#4caf50" stroke-width="2" fill="none">
+                                <path d="M 180 110 Q 200 105 220 110 T 260 115"/>
+                                <path d="M 180 120 Q 200 115 220 120 T 260 125"/>
+                                <path d="M 180 130 Q 200 125 220 130 T 260 135"/>
+                            </g>
+                            <text x="220" y="175" text-anchor="middle" font-size="8">变形后的光图案</text>
+                            
+                            <!-- 相机 -->
+                            <rect x="300" y="100" width="60" height="40" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="5"/>
+                            <text x="330" y="125" text-anchor="middle" font-size="10" font-weight="bold">红外相机</text>
+                            
+                            <!-- 光路 -->
+                            <defs>
+                                <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                                  <polygon points="0 0, 8 3, 0 6" fill="#666" />
+                                </marker>
+                            </defs>
+                            <line x1="80" y1="115" x2="180" y2="115" stroke="#ff5722" stroke-width="2" marker-end="url(#arrow)"/>
+                            <line x1="260" y1="120" x2="300" y2="120" stroke="#4caf50" stroke-width="2" marker-end="url(#arrow)"/>
+                            
+                            <!-- 公式 -->
+                            <text x="200" y="250" text-anchor="middle" font-size="12" font-weight="bold">深度计算公式:</text>
+                            <text x="200" y="270" text-anchor="middle" font-size="11">Z = f × B / d</text>
+                            <text x="200" y="285" text-anchor="middle" font-size="9">f:焦距, B:基线, d:视差</text>
+                        </svg>
+                    </div>
+                    <p><strong>原理：</strong>投射特定的结构光图案到物体表面，通过分析图案的变形程度计算深度。精度高，适合近距离精密测量。</p>
+                </div>
+                
+                <div class="principle-item">
+                    <h3>⏱️ 飞行时间技术 (ToF)</h3>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="400" height="300" fill="#f0fff0"/>
+                            
+                            <!-- 发射器 -->
+                            <rect x="50" y="100" width="50" height="40" fill="#ffeb3b" stroke="#f57f17" stroke-width="2" rx="5"/>
+                            <text x="75" y="125" text-anchor="middle" font-size="10" font-weight="bold">光脉冲发射</text>
+                            
+                            <!-- 物体 -->
+                            <rect x="250" y="80" width="60" height="80" fill="#9e9e9e" stroke="#424242" stroke-width="2" rx="5"/>
+                            <text x="280" y="125" text-anchor="middle" font-size="10">目标物体</text>
+                            
+                            <!-- 接收器 -->
+                            <rect x="50" y="180" width="50" height="40" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="5"/>
+                            <text x="75" y="205" text-anchor="middle" font-size="10" font-weight="bold">光脉冲接收</text>
+                            
+                            <!-- 光路 -->
+                            <line x1="100" y1="120" x2="250" y2="120" stroke="#ff5722" stroke-width="3" marker-end="url(#arrow)"/>
+                            <line x1="250" y1="140" x2="100" y2="200" stroke="#4caf50" stroke-width="3" marker-end="url(#arrow)"/>
+                            
+                            <!-- 时间轴 -->
+                            <line x1="30" y1="260" x2="370" y2="260" stroke="#333" stroke-width="2"/>
+                            <text x="200" y="280" text-anchor="middle" font-size="10">时间轴</text>
+                            
+                            <!-- 发射脉冲 -->
+                            <rect x="80" y="240" width="4" height="20" fill="#ff5722"/>
+                            <text x="82" y="235" text-anchor="middle" font-size="8">发射</text>
+                            
+                            <!-- 接收脉冲 -->
+                            <rect x="280" y="240" width="4" height="20" fill="#4caf50"/>
+                            <text x="282" y="235" text-anchor="middle" font-size="8">接收</text>
+                            
+                            <!-- 时间差 -->
+                            <line x1="84" y1="250" x2="280" y2="250" stroke="#2196f3" stroke-width="2"/>
+                            <text x="180" y="245" text-anchor="middle" font-size="9">Δt (飞行时间)</text>
+                            
+                            <!-- 公式 -->
+                            <text x="200" y="20" text-anchor="middle" font-size="12" font-weight="bold">ToF深度计算:</text>
+                            <text x="200" y="40" text-anchor="middle" font-size="11">距离 = c × Δt / 2</text>
+                            <text x="200" y="55" text-anchor="middle" font-size="9">c: 光速, Δt: 往返时间</text>
+                        </svg>
+                    </div>
+                    <p><strong>原理：</strong>发射光脉冲并测量往返时间，通过光速计算距离。响应快，测量范围广，但易受环境光干扰。</p>
+                </div>
+                
+                <div class="principle-item">
+                    <h3>👁️ 双目立体视觉</h3>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="400" height="300" fill="#fff8f0"/>
+                            
+                            <!-- 左相机 -->
+                            <rect x="50" y="100" width="40" height="30" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="3"/>
+                            <text x="70" y="120" text-anchor="middle" font-size="10" font-weight="bold">左相机</text>
+                            
+                            <!-- 右相机 -->
+                            <rect x="130" y="100" width="40" height="30" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="3"/>
+                            <text x="150" y="120" text-anchor="middle" font-size="10" font-weight="bold">右相机</text>
+                            
+                            <!-- 目标点 -->
+                            <circle cx="280" cy="80" r="8" fill="#ff5722" stroke="#d84315" stroke-width="2"/>
+                            <text x="280" y="105" text-anchor="middle" font-size="10">目标点P</text>
+                            
+                            <!-- 视线 -->
+                            <line x1="70" y1="115" x2="280" y2="80" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,2"/>
+                            <line x1="150" y1="115" x2="280" y2="80" stroke="#ff9800" stroke-width="2" stroke-dasharray="3,2"/>
+                            
+                            <!-- 基线 -->
+                            <line x1="70" y1="160" x2="150" y2="160" stroke="#333" stroke-width="3"/>
+                            <text x="110" y="175" text-anchor="middle" font-size="10">基线B</text>
+                            
+                            <!-- 视差角 -->
+                            <path d="M 70 115 A 30 30 0 0 1 90 125" fill="none" stroke="#9c27b0" stroke-width="2"/>
+                            <text x="95" y="135" font-size="8">α</text>
+                            
+                            <path d="M 150 115 A 30 30 0 0 0 130 125" fill="none" stroke="#9c27b0" stroke-width="2"/>
+                            <text x="125" y="135" font-size="8">β</text>
+                            
+                            <!-- 距离标注 -->
+                            <line x1="110" y1="200" x2="280" y2="200" stroke="#666" stroke-width="1" stroke-dasharray="2,2"/>
+                            <text x="195" y="215" text-anchor="middle" font-size="10">距离 Z</text>
+                            
+                            <!-- 公式 -->
+                            <text x="200" y="250" text-anchor="middle" font-size="12" font-weight="bold">三角测距公式:</text>
+                            <text x="200" y="270" text-anchor="middle" font-size="11">Z = B × f / (xl - xr)</text>
+                            <text x="200" y="285" text-anchor="middle" font-size="9">B:基线, f:焦距, (xl-xr):视差</text>
+                        </svg>
+                    </div>
+                    <p><strong>原理：</strong>模拟人眼双目视觉，通过两个相机的视差计算深度。无需主动光源，但依赖物体表面纹理特征。</p>
+                </div>
+                
+                <div class="principle-item">
+                    <h3>📡 激光雷达 (LiDAR)</h3>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="400" height="300" fill="#f0f8ff"/>
+                            
+                            <!-- 雷达装置 -->
+                            <rect x="180" y="200" width="40" height="30" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="3"/>
+                            <text x="200" y="220" text-anchor="middle" font-size="10" font-weight="bold">LiDAR</text>
+                            
+                            <!-- 旋转扫描 -->
+                            <circle cx="200" cy="200" r="80" fill="none" stroke="#ff5722" stroke-width="2" stroke-dasharray="5,3"/>
+                            <text x="200" y="125" text-anchor="middle" font-size="10">360°扫描范围</text>
+                            
+                            <!-- 激光束 -->
+                            <g stroke="#ff5722" stroke-width="2">
+                                <line x1="200" y1="200" x2="200" y2="120" marker-end="url(#arrow)"/>
+                                <line x1="200" y1="200" x2="260" y2="140" marker-end="url(#arrow)"/>
+                                <line x1="200" y1="200" x2="280" y2="200" marker-end="url(#arrow)"/>
+                                <line x1="200" y1="200" x2="140" y2="140" marker-end="url(#arrow)"/>
+                                <line x1="200" y1="200" x2="120" y2="200" marker-end="url(#arrow)"/>
+                            </g>
+                            
+                            <!-- 障碍物 -->
+                            <rect x="190" y="110" width="20" height="15" fill="#9e9e9e" stroke="#424242" stroke-width="1" rx="2"/>
+                            <rect x="250" y="130" width="15" height="20" fill="#9e9e9e" stroke="#424242" stroke-width="1" rx="2"/>
+                            <rect x="270" y="190" width="15" height="20" fill="#9e9e9e" stroke="#424242" stroke-width="1" rx="2"/>
+                            
+                            <!-- 反射光 -->
+                            <g stroke="#4caf50" stroke-width="2" stroke-dasharray="3,2">
+                                <line x1="200" y1="125" x2="200" y2="200"/>
+                                <line x1="257" y1="140" x2="200" y2="200"/>
+                                <line x1="277" y1="200" x2="200" y2="200"/>
+                            </g>
+                            
+                            <!-- 点云数据 -->
+                            <g fill="#2196f3" r="2">
+                                <circle cx="200" cy="120" r="2"/>
+                                <circle cx="260" cy="140" r="2"/>
+                                <circle cx="280" cy="200" r="2"/>
+                                <circle cx="140" cy="140" r="2"/>
+                                <circle cx="120" cy="200" r="2"/>
+                            </g>
+                            <text x="350" y="120" font-size="9">点云数据</text>
+                            
+                            <!-- 技术参数 -->
+                            <text x="200" y="30" text-anchor="middle" font-size="12" font-weight="bold">LiDAR技术参数:</text>
+                            <text x="200" y="50" text-anchor="middle" font-size="10">测量精度: ±2cm</text>
+                            <text x="200" y="65" text-anchor="middle" font-size="10">测量距离: 1-200m</text>
+                            <text x="200" y="80" text-anchor="middle" font-size="10">扫描频率: 10-20Hz</text>
+                        </svg>
+                    </div>
+                    <p><strong>原理：</strong>发射激光束并接收反射信号，通过飞行时间计算距离。精度极高，测程远，但成本较高。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔌 核心电路设计</h2>
+            
+            <div class="diagram-container">
+                <h4>结构光深度相机电路框图</h4>
+                <svg class="circuit-diagram" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="900" height="500" fill="#f8f9ff"/>
+                    
+                    <!-- 电源管理模块 -->
+                    <rect x="50" y="50" width="120" height="60" fill="#ffeb3b" stroke="#f57f17" stroke-width="2" rx="8"/>
+                    <text x="110" y="75" text-anchor="middle" font-size="12" font-weight="bold">电源管理</text>
+                    <text x="110" y="90" text-anchor="middle" font-size="10">3.3V/5V/12V</text>
+                    <text x="110" y="105" text-anchor="middle" font-size="9">LDO/DCDC</text>
+                    
+                    <!-- 激光驱动电路 -->
+                    <rect x="50" y="150" width="120" height="80" fill="#ff5722" stroke="#d84315" stroke-width="2" rx="8"/>
+                    <text x="110" y="175" text-anchor="middle" font-size="12" font-weight="bold">激光驱动</text>
+                    <text x="110" y="190" text-anchor="middle" font-size="10">VCSEL Driver</text>
+                    <text x="110" y="205" text-anchor="middle" font-size="9">电流控制</text>
+                    <text x="110" y="220" text-anchor="middle" font-size="9">脉冲调制</text>
+                    
+                    <!-- 激光器 -->
+                    <rect x="220" y="160" width="80" height="60" fill="#e91e63" stroke="#ad1457" stroke-width="2" rx="8"/>
+                    <text x="260" y="185" text-anchor="middle" font-size="12" font-weight="bold">VCSEL</text>
+                    <text x="260" y="200" text-anchor="middle" font-size="10">850nm</text>
+                    <text x="260" y="215" text-anchor="middle" font-size="9">结构光图案</text>
+                    
+                    <!-- DOE光学器件 -->
+                    <circle cx="360" cy="190" r="25" fill="#4caf50" stroke="#2e7d32" stroke-width="2"/>
+                    <text x="360" y="195" text-anchor="middle" font-size="10" font-weight="bold">DOE</text>
+                    <text x="360" y="240" text-anchor="middle" font-size="9">衍射光学元件</text>
+                    
+                    <!-- 红外相机传感器 -->
+                    <rect x="500" y="130" width="120" height="120" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="8"/>
+                    <text x="560" y="155" text-anchor="middle" font-size="12" font-weight="bold">IR CMOS</text>
+                    <text x="560" y="170" text-anchor="middle" font-size="10">传感器</text>
+                    <text x="560" y="190" text-anchor="middle" font-size="9">1280×720</text>
+                    <text x="560" y="205" text-anchor="middle" font-size="9">全局快门</text>
+                    <text x="560" y="220" text-anchor="middle" font-size="9">850nm滤波</text>
+                    <text x="560" y="235" text-anchor="middle" font-size="9">AFE电路</text>
+                    
+                    <!-- ISP图像处理器 -->
+                    <rect x="680" y="150" width="120" height="80" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2" rx="8"/>
+                    <text x="740" y="175" text-anchor="middle" font-size="12" font-weight="bold">ISP处理器</text>
+                    <text x="740" y="190" text-anchor="middle" font-size="10">图像预处理</text>
+                    <text x="740" y="205" text-anchor="middle" font-size="9">降噪/校正</text>
+                    <text x="740" y="220" text-anchor="middle" font-size="9">格式转换</text>
+                    
+                    <!-- 深度计算单元 -->
+                    <rect x="680" y="270" width="120" height="100" fill="#ff9800" stroke="#e65100" stroke-width="2" rx="8"/>
+                    <text x="740" y="295" text-anchor="middle" font-size="12" font-weight="bold">深度计算</text>
+                    <text x="740" y="310" text-anchor="middle" font-size="10">DSP/FPGA</text>
+                    <text x="740" y="325" text-anchor="middle" font-size="9">视差计算</text>
+                    <text x="740" y="340" text-anchor="middle" font-size="9">深度映射</text>
+                    <text x="740" y="355" text-anchor="middle" font-size="9">滤波算法</text>
+                    
+                    <!-- 主控MCU -->
+                    <rect x="500" y="300" width="120" height="80" fill="#607d8b" stroke="#37474f" stroke-width="2" rx="8"/>
+                    <text x="560" y="325" text-anchor="middle" font-size="12" font-weight="bold">主控MCU</text>
+                    <text x="560" y="340" text-anchor="middle" font-size="10">ARM Cortex</text>
+                    <text x="560" y="355" text-anchor="middle" font-size="9">系统控制</text>
+                    <text x="560" y="370" text-anchor="middle" font-size="9">通信接口</text>
+                    
+                    <!-- 接口模块 -->
+                    <rect x="300" y="300" width="120" height="80" fill="#795548" stroke="#5d4037" stroke-width="2" rx="8"/>
+                    <text x="360" y="325" text-anchor="middle" font-size="12" font-weight="bold">接口模块</text>
+                    <text x="360" y="340" text-anchor="middle" font-size="10">USB3.0</text>
+                    <text x="360" y="355" text-anchor="middle" font-size="9">以太网</text>
+                    <text x="360" y="370" text-anchor="middle" font-size="9">MIPI CSI</text>
+                    
+                    <!-- 连接线 -->
+                    <defs>
+                        <marker id="circuit-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                          <polygon points="0 0, 8 3, 0 6" fill="#333" />
+                        </marker>
+                    </defs>
+                    
+                    <!-- 电源连接 -->
+                    <line x1="110" y1="110" x2="110" y2="150" stroke="#333" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    <line x1="170" y1="80" x2="220" y2="80" stroke="#333" stroke-width="2"/>
+                    <line x1="220" y1="80" x2="220" y2="160" stroke="#333" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 激光驱动连接 -->
+                    <line x1="170" y1="190" x2="220" y2="190" stroke="#ff5722" stroke-width="3" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 光路 -->
+                    <line x1="300" y1="190" x2="335" y2="190" stroke="#e91e63" stroke-width="3" marker-end="url(#circuit-arrow)"/>
+                    <line x1="385" y1="190" x2="500" y2="190" stroke="#4caf50" stroke-width="3" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 数据连接 -->
+                    <line x1="620" y1="190" x2="680" y2="190" stroke="#2196f3" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    <line x1="740" y1="230" x2="740" y2="270" stroke="#2196f3" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    <line x1="680" y1="320" x2="620" y2="320" stroke="#ff9800" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    <line x1="500" y1="340" x2="420" y2="340" stroke="#607d8b" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 控制信号 -->
+                    <line x1="500" y1="300" x2="300" y2="250" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+                    <line x1="300" y1="250" x2="110" y2="230" stroke="#666" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 标题和说明 -->
+                    <text x="450" y="30" text-anchor="middle" font-size="16" font-weight="bold">结构光深度相机电路系统框图</text>
+                    
+                    <!-- 信号说明 -->
+                    <text x="50" y="450" font-size="10" font-weight="bold">信号说明:</text>
+                    <line x1="120" y1="460" x2="140" y2="460" stroke="#ff5722" stroke-width="3"/>
+                    <text x="150" y="465" font-size="9">激光驱动信号</text>
+                    <line x1="120" y1="470" x2="140" y2="470" stroke="#4caf50" stroke-width="3"/>
+                    <text x="150" y="475" font-size="9">结构光投射</text>
+                    <line x1="250" y1="460" x2="270" y2="460" stroke="#2196f3" stroke-width="2"/>
+                    <text x="280" y="465" font-size="9">图像数据</text>
+                    <line x1="250" y1="470" x2="270" y2="470" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+                    <text x="280" y="475" font-size="9">控制信号</text>
+                </svg>
+            </div>
+            
+            <div class="diagram-container">
+                <h4>ToF深度相机电路设计</h4>
+                <svg class="circuit-diagram" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="900" height="400" fill="#f0fff0"/>
+                    
+                    <!-- 时钟发生器 -->
+                    <rect x="50" y="50" width="100" height="60" fill="#ffeb3b" stroke="#f57f17" stroke-width="2" rx="8"/>
+                    <text x="100" y="75" text-anchor="middle" font-size="12" font-weight="bold">时钟发生器</text>
+                    <text x="100" y="90" text-anchor="middle" font-size="10">100MHz</text>
+                    <text x="100" y="105" text-anchor="middle" font-size="9">基准时钟</text>
+                    
+                    <!-- LED驱动电路 -->
+                    <rect x="200" y="50" width="120" height="80" fill="#ff5722" stroke="#d84315" stroke-width="2" rx="8"/>
+                    <text x="260" y="75" text-anchor="middle" font-size="12" font-weight="bold">LED驱动</text>
+                    <text x="260" y="90" text-anchor="middle" font-size="10">脉冲调制</text>
+                    <text x="260" y="105" text-anchor="middle" font-size="9">940nm LED</text>
+                    <text x="260" y="120" text-anchor="middle" font-size="9">功率控制</text>
+                    
+                    <!-- 红外LED阵列 -->
+                    <rect x="370" y="60" width="80" height="60" fill="#e91e63" stroke="#ad1457" stroke-width="2" rx="8"/>
+                    <text x="410" y="85" text-anchor="middle" font-size="12" font-weight="bold">IR LED</text>
+                    <text x="410" y="100" text-anchor="middle" font-size="10">940nm</text>
+                    <text x="410" y="115" text-anchor="middle" font-size="9">阵列光源</text>
+                    
+                    <!-- ToF传感器 -->
+                    <rect x="500" y="40" width="140" height="100" fill="#2196f3" stroke="#1565c0" stroke-width="2" rx="8"/>
+                    <text x="570" y="65" text-anchor="middle" font-size="12" font-weight="bold">ToF传感器</text>
+                    <text x="570" y="80" text-anchor="middle" font-size="10">CCD/CMOS</text>
+                    <text x="570" y="95" text-anchor="middle" font-size="9">相位检测</text>
+                    <text x="570" y="110" text-anchor="middle" font-size="9">320×240</text>
+                    <text x="570" y="125" text-anchor="middle" font-size="9">NIR敏感</text>
+                    
+                    <!-- 模拟前端 -->
+                    <rect x="690" y="60" width="120" height="80" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2" rx="8"/>
+                    <text x="750" y="85" text-anchor="middle" font-size="12" font-weight="bold">AFE</text>
+                    <text x="750" y="100" text-anchor="middle" font-size="10">模拟前端</text>
+                    <text x="750" y="115" text-anchor="middle" font-size="9">CDS/PGA</text>
+                    <text x="750" y="130" text-anchor="middle" font-size="9">ADC 12bit</text>
+                    
+                    <!-- 相位计算单元 -->
+                    <rect x="550" y="200" width="140" height="100" fill="#ff9800" stroke="#e65100" stroke-width="2" rx="8"/>
+                    <text x="620" y="225" text-anchor="middle" font-size="12" font-weight="bold">相位计算</text>
+                    <text x="620" y="240" text-anchor="middle" font-size="10">DSP处理器</text>
+                    <text x="620" y="255" text-anchor="middle" font-size="9">I/Q解调</text>
+                    <text x="620" y="270" text-anchor="middle" font-size="9">相位差检测</text>
+                    <text x="620" y="285" text-anchor="middle" font-size="9">距离计算</text>
+                    
+                    <!-- 系统控制器 -->
+                    <rect x="300" y="220" width="120" height="80" fill="#607d8b" stroke="#37474f" stroke-width="2" rx="8"/>
+                    <text x="360" y="245" text-anchor="middle" font-size="12" font-weight="bold">系统控制</text>
+                    <text x="360" y="260" text-anchor="middle" font-size="10">MCU</text>
+                    <text x="360" y="275" text-anchor="middle" font-size="9">时序控制</text>
+                    <text x="360" y="290" text-anchor="middle" font-size="9">参数调节</text>
+                    
+                    <!-- 输出接口 -->
+                    <rect x="100" y="240" width="100" height="60" fill="#795548" stroke="#5d4037" stroke-width="2" rx="8"/>
+                    <text x="150" y="265" text-anchor="middle" font-size="12" font-weight="bold">输出接口</text>
+                    <text x="150" y="280" text-anchor="middle" font-size="10">USB/SPI</text>
+                    <text x="150" y="295" text-anchor="middle" font-size="9">深度数据</text>
+                    
+                    <!-- 连接线 -->
+                    <!-- 时钟信号 -->
+                    <line x1="150" y1="80" x2="200" y2="80" stroke="#ffeb3b" stroke-width="3" marker-end="url(#circuit-arrow)"/>
+                    <line x1="100" y1="110" x2="100" y2="180" stroke="#ffeb3b" stroke-width="2"/>
+                    <line x1="100" y1="180" x2="360" y2="180" stroke="#ffeb3b" stroke-width="2"/>
+                    <line x1="360" y1="180" x2="360" y2="220" stroke="#ffeb3b" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- LED驱动 -->
+                    <line x1="320" y1="90" x2="370" y2="90" stroke="#ff5722" stroke-width="3" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 光信号 -->
+                    <line x1="450" y1="90" x2="500" y2="90" stroke="#e91e63" stroke-width="4" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 传感器输出 -->
+                    <line x1="640" y1="100" x2="690" y2="100" stroke="#2196f3" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- AFE输出 -->
+                    <line x1="750" y1="140" x2="750" y2="180" stroke="#9c27b0" stroke-width="2"/>
+                    <line x1="750" y1="180" x2="690" y2="180" stroke="#9c27b0" stroke-width="2"/>
+                    <line x1="690" y1="180" x2="690" y2="250" stroke="#9c27b0" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 控制信号 -->
+                    <line x1="420" y1="260" x2="550" y2="260" stroke="#607d8b" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    <line x1="300" y1="270" x2="200" y2="270" stroke="#607d8b" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    <line x1="550" y1="270" x2="200" y2="270" stroke="#ff9800" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 输出数据 -->
+                    <line x1="300" y1="280" x2="200" y2="280" stroke="#795548" stroke-width="2" marker-end="url(#circuit-arrow)"/>
+                    
+                    <!-- 标题 -->
+                    <text x="450" y="30" text-anchor="middle" font-size="16" font-weight="bold">ToF深度相机电路系统设计</text>
+                    
+                    <!-- 时序图 -->
+                    <text x="100" y="360" font-size="12" font-weight="bold">时序关系:</text>
+                    <line x1="50" y1="370" x2="500" y2="370" stroke="#333" stroke-width="1"/>
+                    
+                    <!-- LED脉冲 -->
+                    <rect x="80" y="365" width="10" height="10" fill="#ff5722"/>
+                    <rect x="110" y="365" width="10" height="10" fill="#ff5722"/>
+                    <rect x="140" y="365" width="10" height="10" fill="#ff5722"/>
+                    <text x="115" y="390" text-anchor="middle" font-size="9">LED脉冲</text>
+                    
+                    <!-- 传感器采样 -->
+                    <rect x="85" y="375" width="10" height="5" fill="#2196f3"/>
+                    <rect x="115" y="375" width="10" height="5" fill="#2196f3"/>
+                    <rect x="145" y="375" width="10" height="5" fill="#2196f3"/>
+                    <text x="115" y="395" text-anchor="middle" font-size="9">传感器采样</text>
+                </svg>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 技术对比与性能指标</h2>
+            
+            <h3>技术参数对比表</h3>
+            <table class="tech-comparison">
+                <thead>
+                    <tr>
+                        <th>技术类型</th>
+                        <th>工作原理</th>
+                        <th>测量范围</th>
+                        <th>精度</th>
+                        <th>分辨率</th>
+                        <th>帧率</th>
+                        <th>功耗</th>
+                        <th>成本</th>
+                        <th>主要优势</th>
+                        <th>主要劣势</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>结构光</strong></td>
+                        <td>投射编码光图案<br>分析变形计算深度</td>
+                        <td>0.2-3米</td>
+                        <td>±1mm</td>
+                        <td>640×480<br>至1280×720</td>
+                        <td>30-60fps</td>
+                        <td>2-5W</td>
+                        <td>中等</td>
+                        <td>• 高精度<br>• 抗环境光干扰<br>• 纹理无关</td>
+                        <td>• 距离受限<br>• 多设备干扰<br>• 室外性能差</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ToF</strong></td>
+                        <td>测量光信号<br>往返飞行时间</td>
+                        <td>0.1-10米</td>
+                        <td>±5-10mm</td>
+                        <td>160×120<br>至640×480</td>
+                        <td>60-120fps</td>
+                        <td>3-8W</td>
+                        <td>较高</td>
+                        <td>• 响应速度快<br>• 测量范围广<br>• 实时性好</td>
+                        <td>• 精度相对较低<br>• 受强光影响<br>• 多径干扰</td>
+                    </tr>
+                    <tr>
+                        <td><strong>双目立体</strong></td>
+                        <td>计算两个相机<br>图像间的视差</td>
+                        <td>1-100米</td>
+                        <td>±10-50mm</td>
+                        <td>1920×1080<br>至4K</td>
+                        <td>30-60fps</td>
+                        <td>5-15W</td>
+                        <td>较低</td>
+                        <td>• 成本低<br>• 无主动光源<br>• 远距离测量</td>
+                        <td>• 依赖纹理特征<br>• 计算复杂度高<br>• 标定要求高</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LiDAR</strong></td>
+                        <td>激光扫描测距<br>生成点云数据</td>
+                        <td>1-200米</td>
+                        <td>±2cm</td>
+                        <td>点云密度<br>可调节</td>
+                        <td>10-20Hz</td>
+                        <td>10-100W</td>
+                        <td>很高</td>
+                        <td>• 极高精度<br>• 超长距离<br>• 全天候工作</td>
+                        <td>• 成本极高<br>• 体积较大<br>• 机械结构复杂</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="performance-grid">
+                <div class="performance-card">
+                    <h4>测量精度</h4>
+                    <div class="performance-value">±1-50mm</div>
+                    <p>根据技术类型和应用场景</p>
+                </div>
+                <div class="performance-card">
+                    <h4>工作距离</h4>
+                    <div class="performance-value">0.1-200m</div>
+                    <p>近距离到远程测量覆盖</p>
+                </div>
+                <div class="performance-card">
+                    <h4>图像分辨率</h4>
+                    <div class="performance-value">VGA-4K</div>
+                    <p>从基础到高清分辨率</p>
+                </div>
+                <div class="performance-card">
+                    <h4>响应时间</h4>
+                    <div class="performance-value">8-33ms</div>
+                    <p>实时到准实时响应</p>
+                </div>
+                <div class="performance-card">
+                    <h4>工作温度</h4>
+                    <div class="performance-value">-20~70℃</div>
+                    <p>工业级温度范围</p>
+                </div>
+                <div class="performance-card">
+                    <h4>视场角</h4>
+                    <div class="performance-value">60-120°</div>
+                    <p>水平和垂直视野范围</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🚀 典型应用场景</h2>
+            
+            <div class="applications-grid">
+                <div class="app-card">
+                    <h4>🤖 机器人导航</h4>
+                    <p><strong>应用需求：</strong>自主移动机器人需要实时感知周围环境，进行避障和路径规划。</p>
+                    <p><strong>技术要求：</strong>快速响应(>30fps)，中等精度(±5-10mm)，广视角覆盖。</p>
+                    <p><strong>推荐技术：</strong>ToF深度相机 + 双目立体视觉组合</p>
+                </div>
+                
+                <div class="app-card">
+                    <h4>🏭 工业检测</h4>
+                    <p><strong>应用需求：</strong>产品质量检测、尺寸测量、表面缺陷检测等精密测量。</p>
+                    <p><strong>技术要求：</strong>高精度(±1mm以内)，稳定性好，抗干扰能力强。</p>
+                    <p><strong>推荐技术：</strong>结构光技术或高精度激光三角测量</p>
+                </div>
+                
+                <div class="app-card">
+                    <h4>🎮 体感交互</h4>
+                    <p><strong>应用需求：</strong>手势识别、人体动作捕捉、虚拟现实交互等。</p>
+                    <p><strong>技术要求：</strong>低延迟响应，中等精度，人体工学友好。</p>
+                    <p><strong>推荐技术：</strong>结构光或ToF技术，集成RGB相机</p>
+                </div>
+                
+                <div class="app-card">
+                    <h4>🚗 自动驾驶</h4>
+                    <p><strong>应用需求：</strong>车辆周围障碍物检测、车道线识别、行人检测等。</p>
+                    <p><strong>技术要求：</strong>长距离测量(>50m)，全天候工作，高可靠性。</p>
+                    <p><strong>推荐技术：</strong>车载LiDAR + 多相机融合方案</p>
+                </div>
+                
+                <div class="app-card">
+                    <h4>🏥 医疗健康</h4>
+                    <p><strong>应用需求：</strong>人体姿态分析、康复训练监测、手术导航辅助。</p>
+                    <p><strong>技术要求：</strong>人体安全，高精度，实时监测能力。</p>
+                    <p><strong>推荐技术：</strong>近红外ToF技术，非接触式测量</p>
+                </div>
+                
+                <div class="app-card">
+                    <h4>📱 消费电子</h4>
+                    <p><strong>应用需求：</strong>人脸识别
